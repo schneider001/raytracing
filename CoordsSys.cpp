@@ -7,9 +7,22 @@ Vector<double> CoordsSys::to_pixels(const Vector<double>& coords) {
 }
 
 
-void CoordsSys::draw_pixel(const Vector<double>& coords, const Vector<double>& color_of_point) {
+void CoordsSys::draw_pixel(const Vector<double>& coords, const Vector<double>& color) {
 	Vector<double> rec_coord = to_pixels(coords);
-	txSetPixel(rec_coord.x_, rec_coord.y_, RGB(color_of_point.x_, color_of_point.y_, color_of_point.z_));
+	txSetPixel(rec_coord.x_, rec_coord.y_, RGB(color.x_, color.y_, color.z_));
+}
+
+
+void CoordsSys::draw_circle(const Vector<double>& coords, double r, const Vector<double>& color) {
+	Vector<double> rec_coord = to_pixels(coords);
+	txSetFillColor(RGB(color.x_, color.y_, color.z_));
+	txCircle(rec_coord.x_, rec_coord.y_, r);
+}
+
+void CoordsSys::draw_axis() {
+	txSetColor(TX_BLACK);
+	txLine(450, 0, 450, 550);
+	txLine(0, 275, 900, 275);
 }
 
 

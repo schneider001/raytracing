@@ -10,7 +10,11 @@ public:
 
 	Vector<double> to_pixels(const Vector<double>& coords);
 
-	void draw_pixel(const Vector<double>& coords, const Vector<double>& color_of_point);
+	void draw_pixel(const Vector<double>& coords, const Vector<double>& color);
+
+	void draw_circle(const Vector<double>& coords, double r, const Vector<double>& color);
+
+	void draw_axis();
 
 	void create_window();
 

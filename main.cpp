@@ -43,62 +43,88 @@ struct Sphere {
 
 
 vector intersect_ray_sphere(const vector& O, const vector& D, const Sphere& S);
-Color TraceRay(vector O, vector D, Sphere* arr_of_sph);
+Color trace_ray(vector O, vector D, Sphere* arr_of_sph);
 
-
-int main() {
-
+void twoD() {
 	vector coords0(0, 0);
 	vector coords1(900, 550);
 	CoordsSys canvas(coords0, coords1, 1, 1);
 	canvas.create_window();
-	txBegin();
-	vector O(0, 0, 0);
+	canvas.draw_window();
+	canvas.draw_circle(vector(70, 100, 0), 30, Color(255, 0, 0));
+	canvas.draw_circle(vector(40, 60, 0), 7, Color(0, 0, 255));
+	canvas.draw_circle(vector(200, -200, 0), 100, Color(0, 255, 255));
+	canvas.draw_axis();
+	vector coords_of_camera(0, 0, 0);
 
-	int d = 50;
-	Sphere arr_of_sph[] = { Sphere(vector(-200, 100, 20), 50, Color(0, 255, 0))  };
-	/*
-	vector D(0, 10, d);
-	Color color = TraceRay(O, D, arr_of_sph);
-	printf("%f %f %f", color.x_, color.y_, color.z_);*/
-	
+	int x_of_view_port = 20;
+
+	Sphere arr_of_sph[] = { Sphere(vector(70, 100, 0), 30, Color(255, 0, 0)), 
+							Sphere(vector(40, 60, 0), 7, Color(0, 0, 255)), 
+							Sphere(vector(200, -200, 0), 100, Color(0, 255, 255)) };
+
+	for (int y = -275; y <= 275; y++) {
+		vector dir(x_of_view_port, y, 0);
+		Color color = trace_ray(coords_of_camera, dir, arr_of_sph);
+		canvas.draw_pixel(vector(x_of_view_port, y), color);
+	}
+
+}
+
+void threeD() {
+	vector coords0(0, 0);
+	vector coords1(900, 550);
+	CoordsSys canvas(coords0, coords1, 1, 1);
+	canvas.create_window();
+	canvas.draw_window();
+	vector coords_of_camera(0, 0, 0);
+
+	int z_of_view_port = 20;
+
+	Sphere arr_of_sph[] = { Sphere(vector(0, 100, 70), 30, Color(255, 0, 0)),
+							Sphere(vector(0, 60, 40), 7, Color(0, 0, 255)),
+							Sphere(vector(0, -200, 200), 100, Color(0, 255, 255)) };
+
 	for (int x = -450; x < 450; x++) {
 		for (int y = -275; y < 275; y++) {
-			vector D(x, y, d);
-			Color color = TraceRay(O, D, arr_of_sph);
+			vector dir(x, y, z_of_view_port);
+			Color color = trace_ray(coords_of_camera, dir, arr_of_sph);
 			canvas.draw_pixel(vector(x, y), color);
 		}
 	}
-	txSleep(1000);
 }
 
 
-vector intersect_ray_sphere(const vector& O, const vector& D, const Sphere& S) {
-	vector C = S.center_;
-	double r = S.radius_;
-	vector OC = O + (-1) * C;
+int main() {
+	threeD();	
+}
 
-	double k1 = D * D;
-	double k2 = 2 * OC * D;
-	double k3 = OC * OC - r * r;
 
-	double discriminant = k2 * k2 - 4 * k1 * k3;
+vector intersect_ray_sphere(const vector& coords_of_camera, const vector& dir, const Sphere& sphere) {
+
+	vector OC = coords_of_camera + (-1) * sphere.center_;
+
+	double a = dir * dir;
+	double b = 2 * OC * dir;
+	double c = OC * OC - sphere.radius_ * sphere.radius_;
+
+	double discriminant = b * b - 4 * a * c;
 	if (discriminant < 0) {
 		return vector(inf, inf);
 	}
 
-	double t1 = (-k2 + sqrt(discriminant)) / (2 * k1);
-	double t2 = (-k2 - sqrt(discriminant)) / (2 * k1);
+	double t1 = (-b + sqrt(discriminant)) / (2 * a);
+	double t2 = (-b - sqrt(discriminant)) / (2 * a);
 	return vector(t1, t2);
 }
 
 
-Color TraceRay(vector O, vector D, Sphere* arr_of_sph) {
+Color trace_ray(vector O, vector D, Sphere* arr_of_sph) {
 	double closest_t = inf;
-	Sphere null_sphere(vector(0,0,0), 0, Color(0, 0, 0));
+	Sphere null_sphere(vector(0, 0, 0), 0, Color(0, 0, 0));
 	Sphere closest_sphere(null_sphere);
 
-	for (int i = 0; i < 1; i++) {
+	for (int i = 0; i < 3; i++) {
 
 		vector res = intersect_ray_sphere(O, D, arr_of_sph[i]);
 
