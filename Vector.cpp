@@ -1,5 +1,6 @@
 #include "Vector.h"
 
+
 Vector<double>& Vector<double>::operator = (const Vector<double>& that) {
 	this->x_ = that.x_;
 	this->y_ = that.y_;
