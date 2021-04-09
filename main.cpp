@@ -45,10 +45,10 @@ int main() {
 
 	int z_of_view_port = 1100;
 
-	Sphere arr_of_sph[] = { Sphere(vector(200, 100, 1200), 50,  Color(255, 0, 0)),
-							Sphere(vector(-200, 60,  1300), 75,  Color(0, 0, 255)),
-							Sphere(vector(0, 200, 1400), 100, Color(0, 255, 255)),
-							Sphere(vector(0, -1300, 1200), 1200, Color(255, 255, 0)) };
+	Sphere arr_of_sph[] = { Sphere(vector( 200,   100, 1200),   50, Color(255,   0,   0)),
+				Sphere(vector(-200,    60, 1300),   75, Color(  0,   0, 255)),
+				Sphere(vector(   0,   200, 1400),  100, Color(  0, 255, 255)),
+				Sphere(vector(   0, -1300, 1200), 1200, Color(255, 255,   0)) };
 
 	Light arr_of_lights[] = { Light("point", 0.6, vector(0, 600, 1300)), Light("point", 0.3, vector(0, -600, 1300)), Light("ambient", 0.1) };
 
