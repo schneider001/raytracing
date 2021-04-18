@@ -9,7 +9,7 @@ public:
 	T z_;
 	
 	double length();
-	void normalization();
+	Vector& normalization();
 
 	Vector& operator = (const Vector& that);
 	bool operator == (const Vector& that);

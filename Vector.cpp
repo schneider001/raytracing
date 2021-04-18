@@ -20,11 +20,12 @@ double Vector<double>::length() {
 }
 
 
-void Vector<double>::normalization() {
+Vector<double>& Vector<double>::normalization() {
 	Vector temp_vector = 1 / (*this).length() * (*this);
 	x_ = temp_vector.x_;
 	y_ = temp_vector.y_;
 	z_ = temp_vector.z_;
+	return (*this);
 }
 
 

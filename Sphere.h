@@ -9,6 +9,8 @@ public:
 	vector center_;
 	double radius_;
 	Color color_;
+	int specular_;
+	double reflective_;
 
 	Sphere& operator = (const Sphere& that);
 
@@ -17,6 +19,6 @@ public:
 
 	Sphere(const Sphere& that);
 
-	Sphere(vector center, double radius, Color color);
+	Sphere(vector center, double radius, Color color, int specular, double reflective);
 };
 

@@ -6,15 +6,13 @@ class CoordsSys {
 public:
 	Vector<double> coords0_, coords1_;
 	double scaleX_, scaleY_;
-
+	RGBQUAD* Video_memory;
 
 	Vector<double> to_pixels(const Vector<double>& coords);
 
 	void draw_pixel(const Vector<double>& coords, const Vector<double>& color);
 
 	void draw_circle(const Vector<double>& coords, double r, const Vector<double>& color);
-
-	void draw_axis();
 
 	void create_window();
 
@@ -26,6 +24,7 @@ public:
 		coords0_(coords0),
 		coords1_(coords1),
 		scaleX_(scaleX),
-		scaleY_(scaleY)
+		scaleY_(scaleY),
+		Video_memory(nullptr)
 	{}
 };

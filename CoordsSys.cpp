@@ -10,7 +10,10 @@ Vector<double> CoordsSys::to_pixels(const Vector<double>& coords) {
 
 void CoordsSys::draw_pixel(const Vector<double>& coords, const Vector<double>& color) {
 	Vector<double> rec_coord = to_pixels(coords);
-	txSetPixel(rec_coord.x_, rec_coord.y_, RGB(color.x_, color.y_, color.z_));
+	RGBQUAD* pixel = &Video_memory[(int)rec_coord.x_ + ((int)(coords1_.y_ - coords0_.y_) - (int)rec_coord.y_) * (int)(coords1_.x_ - coords0_.x_)];
+	pixel->rgbRed = color.x_;
+	pixel->rgbGreen = color.y_;
+	pixel->rgbBlue = color.z_;
 }
 
 
@@ -20,15 +23,10 @@ void CoordsSys::draw_circle(const Vector<double>& coords, double r, const Vector
 	txCircle(rec_coord.x_, rec_coord.y_, r);
 }
 
-void CoordsSys::draw_axis() {
-	txSetColor(TX_BLACK);
-	txLine(450, 0, 450, 550);
-	txLine(0, 275, 900, 275);
-}
-
 
 void CoordsSys::create_window() {
 	txCreateWindow(coords1_.x_, coords1_.y_);
+	Video_memory = txVideoMemory();
 }
 
 
