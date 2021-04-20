@@ -12,6 +12,8 @@ public:
 	int specular_;
 	double reflective_;
 
+	double rad_quad;
+
 	Sphere& operator = (const Sphere& that);
 
 	bool operator == (const Sphere& that);

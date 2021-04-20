@@ -8,12 +8,14 @@ Vector<double>& Vector<double>::operator = (const Vector<double>& that) {
 	return *this;
 }
 
+
 bool Vector<double>::operator == (const Vector<double>& that) {
 	if (this->x_ == that.x_ && this->y_ == that.y_ && this->z_ == that.z_)
 		return true;
 	else
 		return false;
 }
+
 
 double Vector<double>::length() {
 	return sqrt(x_ * x_ + y_ * y_ + z_* z_);

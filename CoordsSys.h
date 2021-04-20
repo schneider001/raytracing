@@ -10,6 +10,8 @@ public:
 
 	Vector<double> to_pixels(const Vector<double>& coords);
 
+	Vector<double> extract_rgb(const Vector<double>& coords);
+
 	void draw_pixel(const Vector<double>& coords, const Vector<double>& color);
 
 	void draw_circle(const Vector<double>& coords, double r, const Vector<double>& color);
@@ -19,6 +21,10 @@ public:
 	void draw_window();
 
 	void set_color_back(const Vector<double>& background);
+
+	void begin();
+
+	void end();
 
 	CoordsSys(Vector<double> coords0, Vector<double> coords1, double scaleX, double scaleY) :
 		coords0_(coords0),

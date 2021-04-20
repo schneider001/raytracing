@@ -28,6 +28,7 @@ Sphere::Sphere(const Sphere& that) {
 		color_ = that.color_;
 		specular_ = that.specular_;
 		reflective_ = that.reflective_;
+		rad_quad = that.rad_quad;
 	}
 
 Sphere::Sphere(vector center, double radius, Color color, int specular, double reflective) {
@@ -36,5 +37,6 @@ Sphere::Sphere(vector center, double radius, Color color, int specular, double r
 		color_ = color;
 		specular_ = specular;
 		reflective_ = reflective;
+		rad_quad = radius_ * radius_;
 	}
 

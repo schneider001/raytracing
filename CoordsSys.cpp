@@ -8,6 +8,15 @@ Vector<double> CoordsSys::to_pixels(const Vector<double>& coords) {
 }
 
 
+Vector<double> CoordsSys::extract_rgb(const Vector<double>& coords) {
+	Vector<double> rec_coord = to_pixels(coords);
+	Vector<double> color(txExtractColor(txGetPixel(rec_coord.x_, rec_coord.y_), TX_RED),
+						 txExtractColor(txGetPixel(rec_coord.x_, rec_coord.y_), TX_GREEN),
+						 txExtractColor(txGetPixel(rec_coord.x_, rec_coord.y_), TX_BLUE));
+	return color;
+}
+
+
 void CoordsSys::draw_pixel(const Vector<double>& coords, const Vector<double>& color) {
 	Vector<double> rec_coord = to_pixels(coords);
 	RGBQUAD* pixel = &Video_memory[(int)rec_coord.x_ + ((int)(coords1_.y_ - coords0_.y_) - (int)rec_coord.y_) * (int)(coords1_.x_ - coords0_.x_)];
@@ -39,3 +48,10 @@ void CoordsSys::set_color_back(const Vector<double>& background) {
 	txSetFillColor(RGB(background.x_, background.y_, background.z_));
 }
 
+void CoordsSys::begin() {
+	txBegin();
+}
+
+void CoordsSys::end() {
+	txEnd();
+}

@@ -5,6 +5,8 @@
 #include <iostream>
 #include <cfloat>
 #include <omp.h>
+#include "Matrix.h"
+#include "Camera.h"
 
 
 double inf = DBL_MAX;
@@ -32,20 +34,21 @@ struct Light {
 };
 
 
-vector intersect_ray_sphere(const vector& coords, vector& dir, const Sphere& sphere);
+vector intersect_ray_sphere(const vector& coords, vector& dir, const Sphere& sphere, double dir_dot_dir);
 Color trace_ray(const vector& coords, vector& dir, Sphere* arr_of_sph, Light* arr_of_lights, const int& recursion_depth, const double& tmin, const double& tmax);
-Sphere closest_intersection(const vector& intersection, vector& dir, Sphere* arr_of_sph, const double& tmin, const double& tmax);
+bool existence_of_shadow(const vector& intersection, vector& dir, Sphere* arr_of_sph, const double& tmin, const double& tmax);
 vector reflect_ray(const vector& ray, const vector& normal);
 double compute_lighting(const vector& intersection, vector& normal, vector& overview, Sphere* arr_of_sph, Light* arr_of_lights, const int& specular);
 
 
 int main() {
 	vector coords0(0, 0);
-	vector coords1(900, 550);
+	vector coords1(800, 500);
 	CoordsSys canvas(coords0, coords1, 1, 1);
 	canvas.create_window();
 	canvas.draw_window();
-	vector coords_of_camera(0, 0, 200);
+
+	Camera camera(vector(0, 0, 350));
 
 	int z_of_view_port = 1100;
 	 
@@ -64,39 +67,65 @@ int main() {
 							  Light("null", 0) };
 
 
+	/*while (!GetAsyncKeyState(VK_ESCAPE)) {
+		vector dir(20, 20, z_of_view_port);
+		Matrix turn = camera.change_position(txPI);
+		vector changed_dir = vector_mul_matrix(dir, turn);
+		printf("%f  %f  %f\n", changed_dir.x_, changed_dir.y_, changed_dir.z_);
+	}*/
+
 	while (!GetAsyncKeyState(VK_ESCAPE)) {
 
 		const int num_threads = omp_get_max_threads();
+
 		#pragma omp parallel num_threads(num_threads) 
 		{	
 			int thread_num = omp_get_thread_num();
 
-			for (int x = (coords1.x_ / num_threads) * thread_num - coords1.x_ / 2; x < (coords1.x_ / num_threads) * (thread_num + 1) - coords1.x_ / 2; x++) {
-				for (int y = -coords1.y_ / 2; y < coords1.y_ / 2; y++) {
+			double start_x = (coords1.x_ / num_threads) * thread_num - coords1.x_ / 2;
+			double end_x = (coords1.x_ / num_threads) * (1 + thread_num) - coords1.x_ / 2;
+			double start_y = -coords1.y_ / 2;
+			double end_y = coords1.y_ / 2;
+
+			Matrix turn = camera.rotation(0.001);
+			char but = camera.shift_check();
+			
+
+			for (double x = start_x; x < end_x; x++) {
+				for (double y = start_y; y < end_y; y++) {
 					vector dir(x, y, z_of_view_port);
-					Color color = trace_ray(coords_of_camera, dir, arr_of_sph, arr_of_lights, 3, 1, inf);
+					vector changed_dir = vector_mul_matrix(dir, turn);
+					camera.shift(but, 0.0001);
+					Color color = trace_ray(camera.coords_, changed_dir, arr_of_sph, arr_of_lights, 3, 1, inf);
 					canvas.draw_pixel(vector(x, y), color);
+					//canvas.draw_pixel(vector(x, y + 1), color);
+					//canvas.draw_pixel(vector(x + 1, y), color);
+					//canvas.draw_pixel(vector(x + 1, y + 1), color);
 				}
 			}
 		}
+
 	}
 }
 
 
-vector intersect_ray_sphere(const vector& coords, vector& dir, const Sphere& sphere) {
+vector intersect_ray_sphere(const vector& coords, vector& dir, const Sphere& sphere, double dir_dot_dir) {
 
 	vector OC = coords + (-1) * sphere.center_;
-	double a = dir * dir;
+	double a = dir_dot_dir;
 	double b = 2 * OC * dir;
-	double c = OC * OC - sphere.radius_ * sphere.radius_;
+	double c = OC * OC - sphere.rad_quad;
 
 	double discriminant = b * b - 4 * a * c;
 	if (discriminant < 0) {
 		return vector(inf, inf);
 	}
 
-	double t1 = (-b + sqrt(discriminant)) / (2 * a);
-	double t2 = (-b - sqrt(discriminant)) / (2 * a);
+	double root_disc = sqrt(discriminant);
+	double a_twice = 2 * a;
+
+	double t1 = (-b + root_disc) / a_twice;
+	double t2 = (-b - root_disc) / a_twice;
 	return vector(t1, t2);
 }
 
@@ -107,12 +136,13 @@ Color trace_ray(const vector& coords, vector& dir, Sphere* arr_of_sph, Light* ar
 
 	vector overview = (-1) * dir;
 	dir.normalization();
+
 	double dir_dot_dir = dir * dir;
 
 
 	for (int i = 0; arr_of_sph[i].radius_ != 0; i++) {
 
-		vector res = intersect_ray_sphere(coords, dir, arr_of_sph[i]);
+		vector res = intersect_ray_sphere(coords, dir, arr_of_sph[i], dir_dot_dir);
 
 		if (res.x_ > tmin && res.x_ < tmax && res.x_ < closest_t) {
 			closest_t = res.x_;
@@ -144,26 +174,24 @@ Color trace_ray(const vector& coords, vector& dir, Sphere* arr_of_sph, Light* ar
 }
 
 
-Sphere closest_intersection(const vector& intersection, vector& dir, Sphere* arr_of_sph, const double& tmin, const double& tmax) {
-	double closest_t = inf;
-	Sphere closest_sphere = null_sphere;
+bool existence_of_shadow(const vector& intersection, vector& dir, Sphere* arr_of_sph, const double& tmin, const double& tmax) {
+
 	dir.normalization();
 
+	double dir_dot_dir = dir * dir;
 
 	for (int i = 0; arr_of_sph[i].radius_ != 0; i++) {
 
-		vector res = intersect_ray_sphere(intersection, dir, arr_of_sph[i]);
+		vector res = intersect_ray_sphere(intersection, dir, arr_of_sph[i], dir_dot_dir);
 		
-		if (res.x_ > tmin && res.x_ < tmax && res.x_ < closest_t) {
-			closest_t = res.x_;
-			closest_sphere = arr_of_sph[i];
+		if (res.x_ > tmin && res.x_ < tmax && res.x_) {
+			return true;
 		}
-		if (res.y_ > tmin && res.y_ < tmax && res.y_ < closest_t) {
-			closest_t = res.y_;
-			closest_sphere = arr_of_sph[i];
+		if (res.y_ > tmin && res.y_ < tmax && res.y_) {
+			return true;
 		}
 	}
-	return closest_sphere;
+	return false;
 }
 
 
@@ -177,7 +205,9 @@ double compute_lighting(const vector& intersection, vector& normal, vector& over
 	double intensity = 0;
 	vector l_dir;
 
+
 	for (int i = 0; arr_of_lights[i].type_ != "null"; i++) {
+
 		if (arr_of_lights[i].type_ == "ambient") {
 			intensity += arr_of_lights[i].intensity_;
 		}
@@ -189,10 +219,8 @@ double compute_lighting(const vector& intersection, vector& normal, vector& over
 		}
 
 
-		Sphere shadow_sphere = null_sphere;
 		if (l_dir.length() != 0) {
-			shadow_sphere = closest_intersection(intersection, l_dir, arr_of_sph, 0.0001, inf);
-			if (!(shadow_sphere == null_sphere)) {
+			if (existence_of_shadow(intersection, l_dir, arr_of_sph, 0.0001, inf)) {
 				continue;
 			}
 		}
@@ -215,7 +243,9 @@ double compute_lighting(const vector& intersection, vector& normal, vector& over
 	}
 
 
-	if (intensity > 1)
+	if (intensity > 1) {
 		intensity = 1;
+	}
+
 	return intensity;
 }
