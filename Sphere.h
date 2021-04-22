@@ -19,8 +19,22 @@ public:
 	bool operator == (const Sphere& that);
 
 
-	Sphere(const Sphere& that);
+	Sphere(const Sphere& that):
+		center_(that.center_),
+		radius_(that.radius_),
+		color_(that.color_),
+		specular_(that.specular_),
+		reflective_(that.reflective_),
+		rad_quad(that.rad_quad)
+	{}
 
-	Sphere(vector center, double radius, Color color, int specular, double reflective);
+	Sphere(vector center, double radius, Color color, int specular, double reflective):
+		center_(center),
+		radius_(radius),
+		color_(color),
+		specular_(specular),
+		reflective_(reflective),
+		rad_quad(radius_ * radius_)
+	{}
 };
 

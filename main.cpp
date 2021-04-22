@@ -1,40 +1,24 @@
 #include "Vector.h"
 #include "Sphere.h"
 #include "CoordsSys.h"
-#include "C:\TXlib\TX\TXLib.h"
+#include "Matrix.h"
+#include "Camera.h"
+#include "Light.h"
+
 #include <iostream>
 #include <cfloat>
 #include <omp.h>
-#include "Matrix.h"
-#include "Camera.h"
 
 
 double inf = DBL_MAX;
 using Color = Vector<double>;
 using vector = Vector<double>;
 
+
 Sphere null_sphere(vector(0, 0, 0), 0, Color(0, 0, 0), 0, 0);
 
-struct Light {
-	const char* type_;
-	double intensity_;
-	vector position_;
 
-	Light(const char* type, double intensity, vector position) {
-		type_ = type;
-		intensity_ = intensity;
-		position_ = position;
-	}
-
-	Light(const char* type, double intensity) {
-		type_ = type;
-		intensity_ = intensity;
-		position_ = vector(0, 0, 0);
-	}
-};
-
-
-vector intersect_ray_sphere(const vector& coords, vector& dir, const Sphere& sphere, double dir_dot_dir);
+vector intersect_ray_sphere(const vector& coords, vector& dir, const Sphere& sphere, const double& dir_dot_dir);
 Color trace_ray(const vector& coords, vector& dir, Sphere* arr_of_sph, Light* arr_of_lights, const int& recursion_depth, const double& tmin, const double& tmax);
 bool existence_of_shadow(const vector& intersection, vector& dir, Sphere* arr_of_sph, const double& tmin, const double& tmax);
 vector reflect_ray(const vector& ray, const vector& normal);
@@ -50,66 +34,58 @@ int main() {
 
 	Camera camera(vector(0, 0, 350));
 
-	int z_of_view_port = 1100;
+	double z_of_view_port = 1100;
 	 
-	Sphere arr_of_sph[] = { Sphere(vector( 200,     0,  900),   75,  Color(255,   0,   0), 500, 0.3),
-							Sphere(vector(-200,     0,  900),   75,  Color(  0,   0, 255), 500, 0.3),
-							Sphere(vector(   0,  -100,  900),  100,  Color(  0, 255, 255), 500, 0.3),
-							Sphere(vector(   0, -5100, 1300), 5000,  Color(255, 255,   0),  50, 0.3),
-							Sphere(vector(   0,     0,    0),    0,  Color(  0,   0,   0),   0, 0) };
+	Sphere arr_of_sph[] = { Sphere(vector( 200,     0,  900),   75,  Color(255,   0,   0), 500, 0.4),
+							Sphere(vector(-200,     0,  900),   75,  Color(  0,   0, 255), 500, 0.4),
+							Sphere(vector(   0,  -100,  900),  100,  Color(  0, 255, 255), 500, 0.4),
+							Sphere(vector(   0, -5100, 1300), 5000,  Color(255, 255,   0),  50, 0.4),
+							null_sphere };
 
 	Light arr_of_lights[] = { 
 							  Light("ambient", 0.2),
 							  Light("point", 0.3, vector( 200, 200, 900)),
 							  Light("point", 0.3, vector(-200, 200, 900)),
-							  //Light("directional", 0.2, vector(1, 1,  1)),
-							  //Light("directional", 0.2, vector(-1, 1, 1)),
+							  Light("directional", 0.1, vector(1, 1,  1)),
+							  Light("directional", 0.1, vector(-1, 1, 1)),
 							  Light("null", 0) };
 
 
-	/*while (!GetAsyncKeyState(VK_ESCAPE)) {
-		vector dir(20, 20, z_of_view_port);
-		Matrix turn = camera.change_position(txPI);
-		vector changed_dir = vector_mul_matrix(dir, turn);
-		printf("%f  %f  %f\n", changed_dir.x_, changed_dir.y_, changed_dir.z_);
-	}*/
 
 	while (!GetAsyncKeyState(VK_ESCAPE)) {
 
 		const int num_threads = omp_get_max_threads();
 
 		#pragma omp parallel num_threads(num_threads) 
-		{	
+		{
 			int thread_num = omp_get_thread_num();
 
 			double start_x = (coords1.x_ / num_threads) * thread_num - coords1.x_ / 2;
-			double end_x = (coords1.x_ / num_threads) * (1 + thread_num) - coords1.x_ / 2;
+			double end_x = (coords1.x_ / num_threads) * (1. + thread_num) - coords1.x_ / 2;
 			double start_y = -coords1.y_ / 2;
 			double end_y = coords1.y_ / 2;
 
-			Matrix turn = camera.rotation(0.001);
+			Matrix turn = camera.rotation(0.0003);
 			char but = camera.shift_check();
-			
 
-			for (double x = start_x; x < end_x; x++) {
-				for (double y = start_y; y < end_y; y++) {
+			for (double x = start_x; x < end_x; x+=2) {
+				for (double y = start_y; y < end_y; y+=2) {
 					vector dir(x, y, z_of_view_port);
 					vector changed_dir = vector_mul_matrix(dir, turn);
 					camera.shift(but, 0.0001);
-					Color color = trace_ray(camera.coords_, changed_dir, arr_of_sph, arr_of_lights, 3, 1, inf);
+					Color color = trace_ray(camera.coords_, changed_dir, arr_of_sph, arr_of_lights, 2, 1, inf);
 					canvas.draw_pixel(vector(x, y), color);
-					//canvas.draw_pixel(vector(x, y + 1), color);
-					//canvas.draw_pixel(vector(x + 1, y), color);
-					//canvas.draw_pixel(vector(x + 1, y + 1), color);
+					canvas.draw_pixel(vector(x, y + 1), color);
+					canvas.draw_pixel(vector(x + 1, y), color);
+					canvas.draw_pixel(vector(x + 1, y + 1), color);
 				}
 			}
 		}
-
 	}
 }
 
 
-vector intersect_ray_sphere(const vector& coords, vector& dir, const Sphere& sphere, double dir_dot_dir) {
+vector intersect_ray_sphere(const vector& coords, vector& dir, const Sphere& sphere, const double& dir_dot_dir) {
 
 	vector OC = coords + (-1) * sphere.center_;
 	double a = dir_dot_dir;

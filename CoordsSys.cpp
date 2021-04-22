@@ -20,9 +20,9 @@ Vector<double> CoordsSys::extract_rgb(const Vector<double>& coords) {
 void CoordsSys::draw_pixel(const Vector<double>& coords, const Vector<double>& color) {
 	Vector<double> rec_coord = to_pixels(coords);
 	RGBQUAD* pixel = &Video_memory[(int)rec_coord.x_ + ((int)(coords1_.y_ - coords0_.y_) - (int)rec_coord.y_) * (int)(coords1_.x_ - coords0_.x_)];
-	pixel->rgbRed = color.x_;
-	pixel->rgbGreen = color.y_;
-	pixel->rgbBlue = color.z_;
+	pixel->rgbRed   = (BYTE)color.x_;
+	pixel->rgbGreen = (BYTE)color.y_;
+	pixel->rgbBlue  = (BYTE)color.z_;
 }
 
 

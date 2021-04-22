@@ -8,7 +8,7 @@ using vector = Vector<double>;
 class Matrix {
 public:
 
-	Vector<Vector<double>> table;
+	Vector<vector> table;
 
 	friend vector vector_mul_matrix(const vector& vec, const Matrix& mat);
 
@@ -16,16 +16,12 @@ public:
 
 	Matrix& operator = (const Matrix& that);
 
-	Matrix(vector line_1, vector line_2, vector line_3) {
-		table.x_ = line_1;
-		table.y_ = line_2;
-		table.z_ = line_3;
-	}
+	Matrix(vector line_1, vector line_2, vector line_3):
+		table(line_1, line_2, line_3)
+	{}
 
-	Matrix(const Matrix& that) {
-		table.x_ = that.table.x_;
-		table.y_ = that.table.y_;
-		table.z_ = that.table.z_;
-	}
+	Matrix(const Matrix& that) :
+		table(that.table.x_, that.table.y_, that.table.z_)
+	{}
 };
 

@@ -26,8 +26,8 @@ public:
 
 	void shift(char but, double step);
 
-	Camera(vector coords) {
-		coords_ = coords;
-	}
+	Camera(vector coords):
+		coords_(coords)
+	{}
 };
 

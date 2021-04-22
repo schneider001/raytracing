@@ -27,10 +27,10 @@ public:
 	void end();
 
 	CoordsSys(Vector<double> coords0, Vector<double> coords1, double scaleX, double scaleY) :
+		Video_memory(nullptr),
 		coords0_(coords0),
 		coords1_(coords1),
 		scaleX_(scaleX),
-		scaleY_(scaleY),
-		Video_memory(nullptr)
+		scaleY_(scaleY)
 	{}
 };
