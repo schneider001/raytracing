@@ -1,7 +1,7 @@
 #include "Sphere.h"
 
 
-Sphere&  Sphere:: operator = (const Sphere& that) {
+Sphere  Sphere:: operator = (const Sphere& that) {
 		center_ = that.center_;
 		radius_ = that.radius_;
 		color_ = that.color_;
@@ -20,6 +20,24 @@ bool Sphere::operator == (const Sphere& that) {
 			return true;
 		else
 			return false;
+}
+
+vector Sphere::intersect_ray(const vector& coords, vector& dir) {
+
+	vector OC = coords + (-1) * center_;
+	double a = dir * dir;
+	double b = 2 * OC * dir;
+	double c = OC * OC - rad_quad;
+
+	double discriminant = b * b - 4 * a * c;
+	if (discriminant < 0) {
+		return vector(DBL_MAX, DBL_MAX);
 	}
 
+	double root_disc = sqrt(discriminant);
+	double a_twice = 2 * a;
 
+	double t1 = (-b + root_disc) / a_twice;
+	double t2 = (-b - root_disc) / a_twice;
+	return vector(t1, t2);
+}
