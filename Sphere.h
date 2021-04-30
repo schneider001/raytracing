@@ -24,17 +24,19 @@ public:
 
 	virtual vector intersect_ray(const vector& coords, vector& dir) override;
 
+	virtual vector normal(const vector& coords) override;
+
 
 	Sphere(const Sphere& that) :
-		Object(that.color_, that.specular_, that.reflective_, that.type_),
+		Object(that.color_, that.specular_, that.reflective_, that.refractive_, that.n_, that.type_),
 		center_(that.center_),
 		radius_(that.radius_),
 		rad_quad(that.rad_quad)
 	{}
 
 
-	Sphere(vector center, double radius, Color color, int specular, double reflective) :
-		Object(color, specular, reflective, 1),
+	Sphere(vector center, double radius, Color color, int specular, double reflective, double refractive, double n) :
+		Object(color, specular, reflective, refractive, n, 1),
 		center_(center),
 		radius_(radius),
 		rad_quad(radius_* radius_)

@@ -7,6 +7,9 @@ Plane Plane::operator = (const Plane& that) {
 	color_ = that.color_;
 	specular_ = that.specular_;
 	reflective_ = that.reflective_;
+	refractive_ = that.refractive_;
+	n_ = that.n_;
+	return *this;
 }
 
 
@@ -20,4 +23,9 @@ vector Plane::intersect_ray(const vector& coords, vector& dir) {
 
 	double t = (-1) * (normal_ * coords + D_) / normal_dot_dir;
 	return vector(t, 0, 0);
+}
+
+
+vector Plane::normal(const vector& coords) {
+	return normal_;
 }

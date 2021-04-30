@@ -7,8 +7,10 @@ Sphere  Sphere:: operator = (const Sphere& that) {
 		color_ = that.color_;
 		specular_ = that.specular_;
 		reflective_ = that.reflective_;
+		refractive_ = that.refractive_;
+		n_ = that.n_;
 		return *this;
-	}
+}
 
 
 bool Sphere::operator == (const Sphere& that) {
@@ -21,6 +23,7 @@ bool Sphere::operator == (const Sphere& that) {
 		else
 			return false;
 }
+
 
 vector Sphere::intersect_ray(const vector& coords, vector& dir) {
 
@@ -40,4 +43,11 @@ vector Sphere::intersect_ray(const vector& coords, vector& dir) {
 	double t1 = (-b + root_disc) / a_twice;
 	double t2 = (-b - root_disc) / a_twice;
 	return vector(t1, t2);
+}
+
+
+vector Sphere::normal(const vector& coords) {
+	vector perpendicular = coords + (-1) * center_;
+	perpendicular.normalization();
+	return perpendicular;
 }

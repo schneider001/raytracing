@@ -16,9 +16,10 @@ using Color = Vector<double>;
 using vector = Vector<double>;
 
 
-Color trace_ray(const vector& coords, vector& dir, Object* arr_of_obj[], Light* arr_of_lights, const int& recursion_depth, const double& tmin, const double& tmax);
+Color trace_ray(const vector& coords, vector dir, Object* arr_of_obj[], Light* arr_of_lights, const int& recursion_depth, const int& is_light_in_obj, const double& tmin, const double& tmax);
 bool existence_of_shadow(const vector& intersection, vector& dir, Object* arr_of_obj[], const double& tmin, const double& tmax);
 vector reflect_ray(const vector& ray, const vector& normal);
+vector refract_ray(const vector& ray, const vector& normal, double n1, double n2);
 double compute_lighting(const vector& intersection, vector& normal, vector& overview, Object* arr_of_obj[], Light* arr_of_lights, const int& specular);
 
 
@@ -27,19 +28,21 @@ enum { sphere = 1, plane = 2, end = 0 };
 
 int main() {
 	vector coords0(0, 0);
-	vector coords1(800, 500);
+	vector coords1(750, 500);
 	CoordsSys canvas(coords0, coords1, 1, 1);
 	canvas.create_window();
 	canvas.draw_window();
 
-	Camera camera(vector(0, 0, 350));
+	Camera camera(vector(0, 0, -500));
 
 	double z_of_view_port = 1100;
 	 
-	Object* arr_of_obj[] = { new Sphere(vector( 200,     0,  900),   75,  Color(255,   0,   0), 500, 0.2),
-							 new Sphere(vector(-200,     0,  900),   75,  Color(  0,   0, 255), 500, 0.2),
-							 new Sphere(vector(   0,  -100,  900),  100,  Color(  0, 255, 255), 500, 0.2),
-							 new Plane (vector(0, 1, 0), 200, Color(255, 255, 0), 500, 0.5),
+	Object* arr_of_obj[] = { new Sphere(vector( 200,     0,   900),   75,  Color(255,   0,   0), 500, 0.3, 0.3, 1),
+							 new Sphere(vector(-200,     0,   900),   75,  Color(  0,   0, 255), 500, 0.3, 0.3, 1),
+							 new Sphere(vector(   0,  -100,   900),  100,  Color(  0, 255, 255), 500, 0.5, 0.3, 1),
+							 new Sphere(vector(	  0,   -50,   400),   80,  Color(255, 255, 255), 500, 0.1, 0.9, 1.4),
+							 new Sphere(vector(   0,  -180,   800),   20,  Color(255, 0,   255), 500, 0.3, 0.3, 1),
+							 new Plane (vector(0, 1, 0), 200, Color(255, 255, 0), 500, 0.3, 0),
 							 new End()};
 
 	Light arr_of_lights[] = { 
@@ -49,7 +52,10 @@ int main() {
 							  Light("directional", 0.1, vector(1, 1,  1)),
 							  Light("directional", 0.1, vector(-1, 1, 1)),
 							  Light("null", 0) };
-
+	double tmin = 1;
+	double tmax = DBL_MAX;
+	int reflection_depth = 2;
+	int is_light_in_obj = 0;
 
 
 	while (!GetAsyncKeyState(VK_ESCAPE)) {
@@ -65,7 +71,7 @@ int main() {
 			double start_y = -coords1.y_ / 2;
 			double end_y = coords1.y_ / 2;
 
-			Matrix turn = camera.rotation(0.0003);
+			Matrix turn = camera.rotation(0.0007);
 			char but = camera.shift_check();
 
 			for (double x = start_x; x < end_x; x+=2) {
@@ -73,7 +79,7 @@ int main() {
 					vector dir(x, y, z_of_view_port);
 					vector changed_dir = vector_mul_matrix(dir, turn);
 					camera.shift(but, 0.0001);
-					Color color = trace_ray(camera.coords_, changed_dir, arr_of_obj, arr_of_lights, 2, 1, DBL_MAX);
+					Color color = trace_ray(camera.coords_, changed_dir, arr_of_obj, arr_of_lights, reflection_depth, is_light_in_obj, tmin, tmax);
 					canvas.draw_pixel(vector(x, y), color);
 					canvas.draw_pixel(vector(x, y + 1), color);
 					canvas.draw_pixel(vector(x + 1, y), color);
@@ -86,99 +92,93 @@ int main() {
 
 
 
-Color trace_ray(const vector& coords, vector& dir, Object* arr_of_obj[], Light* arr_of_lights, const int& recursion_depth, const double& tmin, const double& tmax) {
+Color trace_ray(const vector& coords, vector dir, Object* arr_of_obj[], Light* arr_of_lights, const int& recursion_depth, const int& is_light_in_obj, const double& tmin, const double& tmax) {
 
-	Sphere null_sphere(vector(0, 0, 0), 0, Color(0, 0, 0), 0, 0);
-	Plane null_plane(vector(1, 1, 1), 0, Color(0, 0, 0), 0, 0);
+	Object null_obj(Color(0, 0, 0), 0, 0, 0, 0, 0);
+	vector null_vector(0, 0, 0);
 
 	double closest_t = DBL_MAX;
-	int type;
-	
-	double closest_t_sph = DBL_MAX;
-	Sphere* closest_sphere = &null_sphere;
 
-
-	double closest_t_pln = DBL_MAX;
-	Plane* closest_plane = &null_plane;
+	Object* closest_obj = &null_obj;
 
 
 	vector overview = (-1) * dir;
+	vector direction = dir;
 	dir.normalization();
 
+	int i = 0;
+	for (i; arr_of_obj[i]->type_ != plane; i++) {
 
-	for (int i = 0; (*arr_of_obj[i]).type_ != plane; i++) {
+		vector res = arr_of_obj[i]->intersect_ray(coords, dir);
 
-		vector res = (*arr_of_obj[i]).intersect_ray(coords, dir);
-
-		if (res.x_ > tmin && res.x_ < tmax && res.x_ < closest_t_sph) {
-			closest_t_sph = res.x_;
-			closest_sphere = dynamic_cast <Sphere*>(arr_of_obj[i]);
+		if (res.x_ > tmin && res.x_ < tmax && res.x_ < closest_t) {
+			closest_t = res.x_;
+			closest_obj = arr_of_obj[i];
 		}
-		if (res.y_ > tmin && res.y_ < tmax && res.y_ < closest_t_sph) {
-			closest_t_sph = res.y_;
-			closest_sphere = dynamic_cast <Sphere*>(arr_of_obj[i]);
-		}
-	}
-
-
-	for (int i = 0; (*arr_of_obj[i]).type_ != end; i++) {
-
-		vector res = (*arr_of_obj[i]).intersect_ray(coords, dir);
-
-		if (res.x_ > tmin && res.x_ < tmax && res.x_ < closest_t_pln) {
-			closest_t_pln = res.x_;
-			closest_plane = dynamic_cast <Plane*>(arr_of_obj[i]);
+		if (res.y_ > tmin && res.y_ < tmax && res.y_ < closest_t) {
+			closest_t = res.y_;
+			closest_obj = arr_of_obj[i];
 		}
 	}
 
+	int is_light_in_obj_ = is_light_in_obj;
 
-	if (closest_t_pln >= closest_t_sph) {
-		closest_t = closest_t_sph;
-		type = sphere;
-	}
-	else {
-		closest_t = closest_t_pln;
-		type = plane;
+	if (closest_t < DBL_MAX)
+		is_light_in_obj_ += 1;
+
+
+	
+	for (i; arr_of_obj[i]->type_ != end; i++) {
+
+		vector res = arr_of_obj[i]->intersect_ray(coords, dir);
+
+		if (res.x_ > tmin && res.x_ < tmax && res.x_ < closest_t) {
+			closest_t = res.x_;
+			closest_obj = arr_of_obj[i];
+		}
 	}
 
-	if (closest_t == DBL_MAX) {
+
+	if (closest_t == DBL_MAX) 
 		return Color(119, 97, 127);
-	}
+
 
 	vector intersection = coords + closest_t * dir;
-	vector perpendicular;
-	Color color;
-	int specular;
-	double reflective;
+	vector perpendicular = closest_obj->normal(intersection);
+	Color color = closest_obj->color_;
+	int specular = closest_obj->specular_;
+	double reflective = closest_obj->reflective_;
+	double refractive = closest_obj->refractive_;
+	Color reflected_color(0, 0, 0);
+	Color refracted_color(0, 0, 0);
 
-	if (type == sphere) {
-		perpendicular = intersection + (-1) * (*closest_sphere).center_;
-		perpendicular.normalization();
+	double n = closest_obj->n_;
 
-		specular = (*closest_sphere).specular_;
-		color = (*closest_sphere).color_;
-		reflective = (*closest_sphere).reflective_;
-	}
-
-	if(type == plane) {
-		if (closest_plane != nullptr)
-			perpendicular = (*closest_plane).normal_;
-		else 
-			return Color(119, 97, 127);
-
-		specular = (*closest_plane).specular_;
-		color = (*closest_plane).color_;
-		reflective = (*closest_plane).reflective_;
-	}
 
 	Color local_color =  compute_lighting(intersection, perpendicular, overview, arr_of_obj, arr_of_lights, specular) * color;
-	if (recursion_depth <= 0 || reflective <= 0)
+	if (recursion_depth <= 0 || (reflective <= 0 && refractive <= 0))
 		return local_color;
 
 
-	vector reflection = reflect_ray(overview, perpendicular);
-	Color reflected_color = trace_ray(intersection, reflection, arr_of_obj, arr_of_lights, recursion_depth - 1, 0.0001, DBL_MAX);
-	return (1. - reflective) * local_color + reflective * reflected_color;
+	if (reflective > 0) {
+		vector reflection = reflect_ray(overview, perpendicular);
+		reflected_color = trace_ray(intersection, reflection, arr_of_obj, arr_of_lights, recursion_depth - 1, is_light_in_obj, 0.0001, DBL_MAX);
+	}
+
+	if (refractive > 0)  {
+		vector new_dir = dir;
+		if (is_light_in_obj % 2 == 0) {
+			new_dir = refract_ray(dir, perpendicular, 1, n);
+		}
+		else {
+			new_dir = refract_ray(dir, (-1) * perpendicular, n, 1);
+		}
+
+		refracted_color = trace_ray(intersection, new_dir, arr_of_obj, arr_of_lights, recursion_depth, is_light_in_obj_, 0.0001, DBL_MAX);
+
+	}
+
+	return (1. - reflective - refractive) * local_color + reflective * reflected_color + refractive * refracted_color;
 }
 
 
@@ -186,9 +186,10 @@ bool existence_of_shadow(const vector& intersection, vector& dir, Object* arr_of
 
 	dir.normalization();
 
-	for (int i = 0; (*arr_of_obj[i]).type_ != plane; i++) {
+	int i = 0;
+	for (i; arr_of_obj[i]->type_ != plane; i++) {
 
-		vector res = (*arr_of_obj[i]).intersect_ray(intersection, dir);
+		vector res = arr_of_obj[i]->intersect_ray(intersection, dir);
 		
 		if (res.x_ > tmin && res.x_ < tmax)
 			return true;
@@ -197,9 +198,9 @@ bool existence_of_shadow(const vector& intersection, vector& dir, Object* arr_of
 			return true;
 	}
 
-	for (int i = 0; (*arr_of_obj[i]).type_ != end; i++) {
+	for (i; arr_of_obj[i]->type_ != end; i++) {
 
-		vector res = (*arr_of_obj[i]).intersect_ray(intersection, dir);
+		vector res = arr_of_obj[i]->intersect_ray(intersection, dir);
 
 		if (res.x_ > tmin && res.x_ < tmax)
 			return true;
@@ -211,6 +212,18 @@ bool existence_of_shadow(const vector& intersection, vector& dir, Object* arr_of
 
 vector reflect_ray(const vector& ray, const vector& normal) {
 	return 2 * ray * normal * normal + (-1) * ray;
+}
+
+
+vector refract_ray(const vector& ray, const vector& normal, double n1, double n2) {
+
+	double cosa1 = (-1) * ray * normal;
+	double sina1 = sqrt(1 - cosa1 * cosa1);
+	double sina2 = (n1 / n2) * sina1;
+
+	vector refracted = (sina2 / sina1) * (normal + ray) + (-1) * normal;
+
+	return refracted;
 }
 
 
