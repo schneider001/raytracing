@@ -1,11 +1,13 @@
 #include "Vector.h"
-#include "Sphere.h"
 #include "CoordsSys.h"
 #include "Matrix.h"
 #include "Camera.h"
 #include "Light.h"
-#include "Plane.h"
+
 #include "Object.h"
+#include "Sphere.h"
+#include "Plane.h"
+#include "Rectan.h"
 
 #include <iostream>
 #include <omp.h>
@@ -23,12 +25,12 @@ vector refract_ray(const vector& ray, const vector& normal, double n1, double n2
 double compute_lighting(const vector& intersection, vector& normal, vector& overview, Object* arr_of_obj[], Light* arr_of_lights, const int& specular);
 
 
-enum { sphere = 1, plane = 2, end = 0 };
+enum { sphere = 1, plane = 2, rectan = 3, end = 0 };
 
 
 int main() {
 	vector coords0(0, 0);
-	vector coords1(750, 500);
+	vector coords1(775, 500);
 	CoordsSys canvas(coords0, coords1, 1, 1);
 	canvas.create_window();
 	canvas.draw_window();
@@ -37,20 +39,23 @@ int main() {
 
 	double z_of_view_port = 1100;
 	 
-	Object* arr_of_obj[] = { new Sphere(vector( 200,     0,   900),   75,  Color(255,   0,   0), 500, 0.3, 0.3, 1),
-							 new Sphere(vector(-200,     0,   900),   75,  Color(  0,   0, 255), 500, 0.3, 0.3, 1),
-							 new Sphere(vector(   0,  -100,   900),  100,  Color(  0, 255, 255), 500, 0.5, 0.3, 1),
-							 new Sphere(vector(	  0,   -50,   400),   80,  Color(255, 255, 255), 500, 0.1, 0.9, 1.4),
-							 new Sphere(vector(   0,  -180,   800),   20,  Color(255, 0,   255), 500, 0.3, 0.3, 1),
-							 new Plane (vector(0, 1, 0), 200, Color(255, 255, 0), 500, 0.3, 0),
+	Object* arr_of_obj[] = { new Sphere(vector( 200,    0, 900),   75,  Color(255,   0,   0), 500, 0.3, 0.3, 1),
+							 new Sphere(vector(-200,    0, 900),   75,  Color(  0,   0, 255), 500, 0.3, 0.3, 1),
+							 new Sphere(vector(   0, -100, 900),  100,  Color(  0, 255, 255), 500, 0.5, 0.3, 1),
+							 new Sphere(vector(	  0,  -50, 400),   80,  Color(255, 255, 255), 500, 0.1, 0.9, 1.4),
+							 new Sphere(vector(   0, -180, 800),   20,  Color(255,   0, 255), 500, 0.3, 0.3, 1),
+							 new Plane (vector(   0,    1,   0),  200,  Color(255, 255,   0), 500, 0.3, 0),
+							 new Rectan(vector( -50, -150, 500), vector(0, 1, 1), vector(1, 0, 0), 100, 100,
+										Color ( 255,  165,   0), 0, 0.1, 0.4),
 							 new End()};
 
 	Light arr_of_lights[] = { 
 							  Light("ambient", 0.2),
 							  Light("point", 0.3, vector( 200, 200, 900)),
 							  Light("point", 0.3, vector(-200, 200, 900)),
-							  Light("directional", 0.1, vector(1, 1,  1)),
-							  Light("directional", 0.1, vector(-1, 1, 1)),
+							  Light("directional", 0.1, vector( 1, 1,  1)),
+							  Light("directional", 0.1, vector( 0, 0, -1)),
+							  Light("directional", 0.1, vector(-1, 1,  1)),
 							  Light("null", 0) };
 	double tmin = 1;
 	double tmax = DBL_MAX;
@@ -71,7 +76,7 @@ int main() {
 			double start_y = -coords1.y_ / 2;
 			double end_y = coords1.y_ / 2;
 
-			Matrix turn = camera.rotation(0.0007);
+			Matrix turn = camera.rotation(0.0005);
 			char but = camera.shift_check();
 
 			for (double x = start_x; x < end_x; x+=2) {
@@ -125,7 +130,6 @@ Color trace_ray(const vector& coords, vector dir, Object* arr_of_obj[], Light* a
 
 	if (closest_t < DBL_MAX)
 		is_light_in_obj_ += 1;
-
 
 	
 	for (i; arr_of_obj[i]->type_ != end; i++) {
