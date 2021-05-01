@@ -8,6 +8,7 @@
 #include "Sphere.h"
 #include "Plane.h"
 #include "Rectan.h"
+#include "Parallelepiped.h"
 
 #include <iostream>
 #include <omp.h>
@@ -25,12 +26,12 @@ vector refract_ray(const vector& ray, const vector& normal, double n1, double n2
 double compute_lighting(const vector& intersection, vector& normal, vector& overview, Object* arr_of_obj[], Light* arr_of_lights, const int& specular);
 
 
-enum { sphere = 1, plane = 2, rectan = 3, end = 0 };
+enum { sphere = 1, plane = 2, rectan = 3, parallelepiped = 4, end = 0 };
 
 
 int main() {
 	vector coords0(0, 0);
-	vector coords1(775, 500);
+	vector coords1(700, 450);
 	CoordsSys canvas(coords0, coords1, 1, 1);
 	canvas.create_window();
 	canvas.draw_window();
@@ -39,14 +40,16 @@ int main() {
 
 	double z_of_view_port = 1100;
 	 
-	Object* arr_of_obj[] = { new Sphere(vector( 200,    0, 900),   75,  Color(255,   0,   0), 500, 0.3, 0.3, 1),
-							 new Sphere(vector(-200,    0, 900),   75,  Color(  0,   0, 255), 500, 0.3, 0.3, 1),
-							 new Sphere(vector(   0, -100, 900),  100,  Color(  0, 255, 255), 500, 0.5, 0.3, 1),
-							 new Sphere(vector(	  0,  -50, 400),   80,  Color(255, 255, 255), 500, 0.1, 0.9, 1.4),
-							 new Sphere(vector(   0, -180, 800),   20,  Color(255,   0, 255), 500, 0.3, 0.3, 1),
-							 new Plane (vector(   0,    1,   0),  200,  Color(255, 255,   0), 500, 0.3, 0),
-							 new Rectan(vector( -50, -150, 500), vector(0, 1, 1), vector(1, 0, 0), 100, 100,
-										Color ( 255,  165,   0), 0, 0.1, 0.4),
+	Object* arr_of_obj[] = { new Sphere(vector( 200,    0, 900),   75,  Color(255,   0,   0), 500, 0.3, 0.3, 1,   sphere),
+							 new Sphere(vector(-200,    0, 900),   75,  Color(  0,   0, 255), 500, 0.3, 0.3, 1,   sphere),
+							 new Sphere(vector(   0, -100, 900),  100,  Color(  0, 255, 255), 500, 0.5, 0.3, 1,   sphere),
+							 new Sphere(vector(	  0,  -50, 400),   80,  Color(255, 255, 255), 500, 0.1, 0.9, 1.4, sphere),
+							 new Sphere(vector(   0, -180, 800),   20,  Color(255,   0, 255), 500, 0.3, 0.3, 1,   sphere),
+							 new Plane (vector(   0,    1,   0),  200,  Color(255, 255,   0), 500, 0.3, 0,   1,    plane),
+							 new Rectan(vector( -50, -200, 730), vector(0, 1, 1), vector(1, 0, 0), 100, 100,
+										Color ( 255,  255, 255), 300, 0.1, 0.5, 1, rectan),
+							 new Parallelepiped(vector(-12.5, -75, 700), vector(0, 1, 1), vector(1, 0, 0), vector(0, 1, -1),
+								 25, 25, 25, Color(255,  165,   0), 0, 0.1, 0.5, 1, parallelepiped),
 							 new End()};
 
 	Light arr_of_lights[] = { 
@@ -68,7 +71,8 @@ int main() {
 		const int num_threads = omp_get_max_threads();
 
 		#pragma omp parallel num_threads(num_threads) 
-		{
+		{  
+
 			int thread_num = omp_get_thread_num();
 
 			double start_x = (coords1.x_ / num_threads) * thread_num - coords1.x_ / 2;
@@ -76,7 +80,7 @@ int main() {
 			double start_y = -coords1.y_ / 2;
 			double end_y = coords1.y_ / 2;
 
-			Matrix turn = camera.rotation(0.0005);
+			Matrix turn = camera.rotation(0.001);
 			char but = camera.shift_check();
 
 			for (double x = start_x; x < end_x; x+=2) {
@@ -222,7 +226,11 @@ vector reflect_ray(const vector& ray, const vector& normal) {
 vector refract_ray(const vector& ray, const vector& normal, double n1, double n2) {
 
 	double cosa1 = (-1) * ray * normal;
-	double sina1 = sqrt(1 - cosa1 * cosa1);
+	double sina1 = 1;
+
+	if (cosa1 * cosa1 < 1)
+		sina1 = sqrt(1 - cosa1 * cosa1);
+
 	double sina2 = (n1 / n2) * sina1;
 
 	vector refracted = (sina2 / sina1) * (normal + ray) + (-1) * normal;

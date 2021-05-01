@@ -2,6 +2,7 @@
 
 
 #include "Vector.h"
+#include <cfloat>
 
 using Color = Vector<double>;
 using vector = Vector<double>;

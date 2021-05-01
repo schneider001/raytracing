@@ -1,14 +1,8 @@
 #pragma once
 
-#include "Vector.h"
+
 #include "Object.h"
-#include <cfloat>
 
-#include <cfloat>
-
-
-using Color = Vector<double>;
-using vector = Vector<double>;
 
 class Sphere : public Object {
 public:
@@ -35,8 +29,8 @@ public:
 	{}
 
 
-	Sphere(vector center, double radius, Color color, int specular, double reflective, double refractive, double n) :
-		Object(color, specular, reflective, refractive, n, 1),
+	Sphere(vector center, double radius, Color color, int specular, double reflective, double refractive, double n, int type=1) :
+		Object(color, specular, reflective, refractive, n, type),
 		center_(center),
 		radius_(radius),
 		rad_quad(radius_* radius_)

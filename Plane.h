@@ -1,13 +1,7 @@
 #pragma once
 
 
-#include "Vector.h"
 #include "Object.h"
-#include <cfloat>
-
-
-using Color = Vector<double>;
-using vector = Vector<double>;
 
 
 class Plane : public Object {
@@ -34,8 +28,8 @@ public:
 	}
 
 
-	Plane(vector normal, double D, Color color, int specular, double reflective, double refractive) :
-		Object(color, specular, reflective, refractive, 1, 2),
+	Plane(vector normal, double D, Color color, int specular, double reflective, double refractive, double n, int type) :
+		Object(color, specular, reflective, refractive, n, type),
 		normal_(normal),
 		D_(D)
 	{
