@@ -22,9 +22,7 @@ public:
 
 	Matrix rotation(double angle);
 
-	char shift_check();
-
-	void shift(char but, double step);
+	void shift(double step);
 
 	Camera(vector coords):
 		coords_(coords)

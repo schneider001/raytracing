@@ -12,11 +12,12 @@ class Object {
 public:
 
 	Color color_;
-	int specular_;
+	double specular_;
 	double reflective_;
 	double refractive_;
 	double n_;
 	int type_;
+
 
 	Object operator = (const Object& that);
 

@@ -30,7 +30,7 @@ vector Sphere::intersect_ray(const vector& coords, vector& dir) {
 	vector OC = coords + (-1) * center_;
 	double a = dir * dir;
 	double b = 2 * OC * dir;
-	double c = OC * OC - rad_quad;
+	double c = OC * OC - radius_ * radius_;
 
 	double discriminant = b * b - 4 * a * c;
 	if (discriminant < 0) {

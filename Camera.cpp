@@ -45,29 +45,28 @@ Matrix Camera::rotation(double angle) {
 	return temp;
 }
 
-char Camera::shift_check() {
+void Camera::shift(double step) {
 	if (GetAsyncKeyState(VK_SPACE)) {
-		return 'u';
+		coords_.y_ += step;
 	}
 	if (GetAsyncKeyState(VK_SHIFT)) {
-		return 'd';
+		coords_.y_ -= step;
 	}
 	if (GetAsyncKeyState('W')) {
-		return 's';
+		coords_.z_ += step;
 	}
 	if (GetAsyncKeyState('S')) {
-		return 'b';
+		coords_.z_ -= step;
 	}
 	if (GetAsyncKeyState('D')) {
-		return 'r';
+		coords_.x_ += step;
 	}
 	if (GetAsyncKeyState('A')) {
-		return 'l';
+		coords_.x_ -= step;
 	}
-	return 'n';
 }
 
-void Camera::shift(char but, double step) {
+/*void Camera::shift(char but, double step) {
 	if (but == 's') {
 		coords_.z_ += step;
 	}
@@ -87,7 +86,7 @@ void Camera::shift(char but, double step) {
 		coords_.y_ -= step;
 	}
 }
-
+*/
 
 
 

@@ -1,5 +1,4 @@
 #include "Parallelepiped.h"
-#include "iostream"
 
 
 Parallelepiped Parallelepiped::operator = (const Parallelepiped& that) {
@@ -24,20 +23,28 @@ Parallelepiped Parallelepiped::operator = (const Parallelepiped& that) {
 
 
 vector Parallelepiped::normal(const vector& coords) {
-	return closest_rectan.normal_;
+	return normal_;
 }
 
 
 vector Parallelepiped::intersect_ray(const vector& coords, vector& dir) {
+
+
 	vector new_coords_center_shell = 0.5 * ((coords2_ + (-1) * coords0_) + (coords1_ + (-1) * coords0_) + (coords0_ + l3_ * k_ + (-1) * coords0_));
 	double rad_shell = new_coords_center_shell.length();
-	//std::cout << rad_shell << "\n";
 
 	Sphere shell(coords0_ + new_coords_center_shell, rad_shell, Color(0, 0, 0), 0, 0, 0, 0, 1);
 	vector ray_crosses_shell = shell.intersect_ray(coords, dir);
 
 	if (ray_crosses_shell == vector(DBL_MAX, DBL_MAX))
 		return  ray_crosses_shell;
+
+	facets_[0] = Rectan(coords0_, i_, j_, l1_, l2_, color_, specular_, reflective_, refractive_, n_);
+	facets_[1] = Rectan(coords0_ + l3_ * k_, i_, j_, l1_, l2_, color_, specular_, reflective_, refractive_, n_);
+	facets_[2] = Rectan(coords0_, i_, k_, l1_, l3_, color_, specular_, reflective_, refractive_, n_);
+	facets_[3] = Rectan(coords0_ + l2_ * j_, i_, k_, l1_, l3_, color_, specular_, reflective_, refractive_, n_);
+	facets_[4] = Rectan(coords0_, k_, j_, l3_, l2_, color_, specular_, reflective_, refractive_, n_);
+	facets_[5] = Rectan(coords0_ + l1_ * i_, k_, j_, l3_, l2_, color_, specular_, reflective_, refractive_, n_);
 
 	double tmin = 1;
 	double closest_t = DBL_MAX;
@@ -47,7 +54,7 @@ vector Parallelepiped::intersect_ray(const vector& coords, vector& dir) {
 
 		if (res.x_ > tmin && res.x_ < closest_t) {
 			closest_t = res.x_;
-			closest_rectan = facets_[i];
+			normal_ = facets_[i].normal_;
 		}
 	}
 

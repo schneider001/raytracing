@@ -2,17 +2,17 @@
 
 
 #include "Rectan.h"
+#include "iostream"
 
 
 class Parallelepiped : public Rectan {
 
 	Rectan facets_[6];
 
-	Rectan closest_rectan;
-
 public:
 	vector k_;
 	double l3_;
+
 
 	Parallelepiped operator = (const Parallelepiped& that);
 
@@ -36,7 +36,7 @@ public:
 
 	Parallelepiped(vector coords0, vector i, vector j, vector k, double l1, double l2, double l3,
 		Color color, int specular, double reflective, double refractive, double n, int type) :
-		Rectan(coords0, i, j, l1, l2, color, specular, reflective, refractive, n),
+		Rectan(coords0, i, j, l1, l2, color, specular, reflective, refractive, n, type),
 		k_(k.normalization()),
 		l3_(l3)
 	{
